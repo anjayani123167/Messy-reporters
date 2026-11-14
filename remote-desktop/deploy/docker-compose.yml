@@ -1,0 +1,66 @@
+# OfficeDesk server stack for one VPS with a public IP:
+#   server  — sign-in (email codes), device list, signaling, TURN credentials, audit log
+#   caddy   — HTTPS for DESK_DOMAIN with an automatic Let's Encrypt certificate
+#   coturn  — TURN relay, used only when two devices cannot reach each other directly
+# Usage: cp .env.example .env, fill it in, then:  docker compose up -d --build
+services:
+  server:
+    build: ../server
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      TRUST_PROXY: "true"
+      APP_NAME: ${APP_NAME:-OfficeDesk}
+      ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:?set ALLOWED_EMAIL_DOMAINS in .env}
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST in .env}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      MAIL_FROM: ${MAIL_FROM}
+      TURN_HOST: ${TURN_DOMAIN}
+      TURN_PORT: ${TURN_PORT:-8443}
+      TURN_SECRET: ${TURN_SECRET:?set TURN_SECRET in .env}
+    volumes:
+      - server_data:/data
+    expose:
+      - "8080"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+
+  caddy:
+    image: caddy:2
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DESK_DOMAIN: ${DESK_DOMAIN:?set DESK_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [server]
+
+  coturn:
+    image: coturn/coturn:4.7
+    restart: always
+    # TURN needs the real public IP and a UDP port range; host networking avoids Docker NAT.
+    network_mode: host
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+      - --listening-port=${TURN_PORT:-8443}
+      - --external-ip=${PUBLIC_IP:?set PUBLIC_IP in .env}
+      - --realm=${TURN_DOMAIN}
+      - --server-name=${TURN_DOMAIN}
+      - --static-auth-secret=${TURN_SECRET}
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
+
+volumes:
+  server_data:
+  caddy_data:
+  caddy_config:

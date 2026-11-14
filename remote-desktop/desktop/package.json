@@ -1,0 +1,67 @@
+{
+  "name": "officedesk",
+  "productName": "OfficeDesk",
+  "version": "0.1.0",
+  "description": "Remote desktop kantor: masuk dengan email kantor, Windows / macOS / Linux, lintas jaringan",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node scripts/check.js",
+    "dist": "electron-builder --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
+  },
+  "dependencies": {
+    "koffi": "^2.14.1",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "id.co.kantor.officedesk",
+    "productName": "OfficeDesk",
+    "files": [
+      "src/**/*",
+      "config.json",
+      "node_modules/**/*",
+      "!node_modules/koffi/{doc,src,vendor}/**"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/koffi/**"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] },
+        { "target": "zip", "arch": ["arm64", "x64"] }
+      ],
+      "identity": null,
+      "hardenedRuntime": false
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "category": "Network",
+      "maintainer": "IT Kantor",
+      "executableName": "officedesk"
+    },
+    "deb": {
+      "depends": ["libx11-6", "libxtst6", "libnss3", "libgtk-3-0", "libnotify4", "libsecret-1-0"]
+    }
+  }
+}

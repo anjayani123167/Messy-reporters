@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <title>Sedang di-remote</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #b42318; color: #fff; font: 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+      body { display: flex; align-items: center; gap: 10px; padding: 0 8px 0 14px; -webkit-app-region: drag; user-select: none; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; animation: pulse 1.4s infinite; flex: none; }
+      @keyframes pulse { 50% { opacity: .35; } }
+      .text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      button { -webkit-app-region: no-drag; background: #fff; color: #b42318; border: 0; border-radius: 6px; padding: 7px 12px; font: 600 13px system-ui, sans-serif; cursor: pointer; }
+      button:hover { background: #ffe4e1; }
+    </style>
+  </head>
+  <body>
+    <span class="dot"></span>
+    <span class="text" id="text"></span>
+    <button id="end" type="button">Putuskan</button>
+    <script src="banner.js"></script>
+  </body>
+</html>

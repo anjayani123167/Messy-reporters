@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob: mediastream:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>OfficeDesk</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- ── Login ─────────────────────────────────────────────── -->
+    <main id="view-login" class="view center" hidden>
+      <section class="card login">
+        <div class="brand"><span class="logo">◧</span> OfficeDesk</div>
+        <p class="muted" id="login-hint">Masuk dengan email kantor Anda.</p>
+
+        <form id="form-email" autocomplete="on">
+          <label for="email">Email kantor</label>
+          <input id="email" type="email" required autocomplete="email" placeholder="nama@kantor.co.id" />
+          <details class="advanced" id="server-box">
+            <summary>Server</summary>
+            <input id="server-url" type="url" placeholder="https://desk.kantor.co.id" spellcheck="false" />
+          </details>
+          <button class="primary" type="submit" id="btn-send">Kirim kode</button>
+        </form>
+
+        <form id="form-code" hidden>
+          <label for="code">Kode 6 angka yang dikirim ke <b id="code-email"></b></label>
+          <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="••••••" />
+          <button class="primary" type="submit" id="btn-verify">Masuk</button>
+          <div class="row between">
+            <button class="link" type="button" id="btn-back">Ganti email</button>
+            <button class="link" type="button" id="btn-resend">Kirim ulang kode</button>
+          </div>
+        </form>
+        <p class="error" id="login-error" role="alert"></p>
+      </section>
+    </main>
+
+    <!-- ── Home ──────────────────────────────────────────────── -->
+    <main id="view-home" class="view" hidden>
+      <header class="topbar">
+        <div class="brand"><span class="logo">◧</span> OfficeDesk</div>
+        <div class="status" id="status"><span class="dot"></span><span id="status-text">Menghubungkan…</span></div>
+        <div class="spacer"></div>
+        <span class="muted" id="me-email"></span>
+        <button class="ghost" id="btn-logout" type="button">Keluar</button>
+      </header>
+
+      <div id="perm-warnings"></div>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Perangkat ini</h2>
+          <div class="device-id" id="my-id">— — —</div>
+          <p class="muted"><span id="my-name"></span> · bagikan ID ini ke rekan yang akan membantu</p>
+          <label class="switch">
+            <input type="checkbox" id="auto-own" />
+            <span>Akun saya sendiri boleh masuk tanpa konfirmasi<br /><small class="muted">Untuk me-remote PC ini dari perangkat Anda yang lain saat tidak ada orang di depannya</small></span>
+          </label>
+          <div id="hosting-box" hidden class="hosting">
+            <span id="hosting-text"></span>
+            <button class="danger" type="button" id="btn-host-end">Putuskan</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Sambungkan ke perangkat</h2>
+          <form id="form-connect" class="connect">
+            <input id="target" inputmode="numeric" autocomplete="off" placeholder="ID 9 angka" maxlength="11" required />
+            <select id="mode" aria-label="Mode">
+              <option value="control">Kendali penuh</option>
+              <option value="view">Lihat saja</option>
+            </select>
+            <button class="primary" type="submit" id="btn-connect">Sambungkan</button>
+          </form>
+          <div id="pending-box" class="pending" hidden>
+            <span class="spinner"></span>
+            <span id="pending-text">Menunggu persetujuan…</span>
+            <button class="ghost" type="button" id="btn-cancel">Batal</button>
+          </div>
+
+          <h3>Perangkat saya</h3>
+          <ul class="devices" id="devices"></ul>
+        </section>
+      </div>
+
+      <section class="card">
+        <details id="audit-box">
+          <summary><h3 class="inline">Riwayat akses</h3></summary>
+          <table class="audit">
+            <thead><tr><th>Waktu</th><th>Kejadian</th><th>Akun</th><th>Lawan</th><th>Keterangan</th></tr></thead>
+            <tbody id="audit"></tbody>
+          </table>
+        </details>
+      </section>
+    </main>
+
+    <!-- ── Viewer ────────────────────────────────────────────── -->
+    <main id="view-viewer" class="view viewer" hidden>
+      <header class="toolbar">
+        <span class="peer" id="peer-label"></span>
+        <span class="badge" id="mode-badge"></span>
+        <span class="badge subtle" id="net-badge">Menyambung…</span>
+        <div class="spacer"></div>
+        <select id="screen-select" aria-label="Pilih layar" hidden></select>
+        <label class="check" title="Tombol Ctrl di sini menjadi Cmd di Mac (dan sebaliknya)">
+          <input type="checkbox" id="swap-mods" /> Tukar Ctrl/Cmd
+        </label>
+        <button class="ghost" type="button" id="btn-fullscreen">Layar penuh</button>
+        <button class="danger" type="button" id="btn-disconnect">Putuskan</button>
+      </header>
+      <div class="stage" id="stage">
+        <video id="remote" autoplay playsinline muted tabindex="0"></video>
+        <div class="overlay" id="overlay">Menunggu gambar…</div>
+      </div>
+    </main>
+
+    <!-- ── Incoming request ──────────────────────────────────── -->
+    <dialog id="incoming">
+      <h2>Permintaan akses</h2>
+      <p><b id="in-email"></b> <span class="muted">(<span id="in-device"></span>)</span> ingin <b id="in-mode"></b> perangkat ini.</p>
+      <p class="warn">Izinkan hanya jika Anda mengenal orang ini dan memang meminta bantuannya. Anda bisa memutus kapan saja.</p>
+      <div class="row end">
+        <button class="ghost" type="button" id="in-reject">Tolak</button>
+        <button class="ghost" type="button" id="in-view">Izinkan lihat saja</button>
+        <button class="primary" type="button" id="in-accept">Izinkan</button>
+      </div>
+    </dialog>
+
+    <div id="toasts" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

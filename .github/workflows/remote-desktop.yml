@@ -1,0 +1,68 @@
+name: Remote desktop (OfficeDesk)
+
+on:
+  pull_request:
+    paths: ["remote-desktop/**", ".github/workflows/remote-desktop.yml"]
+  push:
+    branches: ["main"]
+    paths: ["remote-desktop/**", ".github/workflows/remote-desktop.yml"]
+  workflow_dispatch:
+
+jobs:
+  server:
+    name: Server tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: remote-desktop/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: remote-desktop/server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  desktop:
+    name: Desktop app (${{ matrix.os }})
+    needs: server
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: --win
+          - os: macos-latest
+            target: --mac
+          - os: ubuntu-latest
+            target: --linux
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: remote-desktop/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: remote-desktop/desktop/package-lock.json
+      - run: npm ci
+      # Loads koffi inside Electron and binds this OS's input functions (sends no input).
+      - run: npm run check
+      - run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: officedesk-${{ runner.os }}
+          path: |
+            remote-desktop/desktop/dist/*.exe
+            remote-desktop/desktop/dist/*.dmg
+            remote-desktop/desktop/dist/*.zip
+            remote-desktop/desktop/dist/*.AppImage
+            remote-desktop/desktop/dist/*.deb
+          if-no-files-found: error
